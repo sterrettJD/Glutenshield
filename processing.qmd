@@ -5,8 +5,8 @@ date: "2024-05-05"
 output: html_document
 ---
 
-Using QIIME2-2023.5.
-Raw sequences are in a dir `raw_sequences/`, and **??????????** holds the metadata.
+Using QIIME2-2021.4.
+Raw sequences are in a dir `raw_seqs/`, and **??????????** holds the metadata.
 
 # Import 
 ```{zsh, eval=F}
@@ -35,10 +35,10 @@ Good quality reads on the whole.
 ```{zsh, eval=F}
 qiime dada2 denoise-paired \
 --i-demultiplexed-seqs qiime/demux/per_sample_sequences.qza \
---p-trim-left-f 20 \
---p-trunc-len-f 227 \
+--p-trim-left-f 21 \
+--p-trunc-len-f 244 \
 --p-trim-left-r 20 \
---p-trunc-len-r 182 \
+--p-trunc-len-r 203 \
 --p-n-threads 32 \
 --output-dir qiime/dada2-out/ \
 --verbose
