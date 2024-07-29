@@ -1,0 +1,106 @@
+---
+title: "Processing"
+author: "John Sterrett"
+date: "2024-05-05"
+output: html_document
+---
+
+Using QIIME2-2023.5.
+Raw sequences are in a dir `raw_sequences/`, and **??????????** holds the metadata.
+
+# Import 
+```{zsh, eval=F}
+mkdir -p qiime/demux 
+
+qiime tools import \
+  --type 'SampleData[PairedEndSequencesWithQuality]' \
+  --input-path raw_seqs \
+  --input-format CasavaOneEightSingleLanePerSampleDirFmt \
+  --output-path qiime/demux/per_sample_sequences.qza
+
+```
+
+# Demux
+```{zsh, eval=F}
+qiime demux summarize \
+ --i-data qiime/demux/per_sample_sequences.qza --o-visualization qiime/demux.qzv
+```
+
+# DADA2
+
+See `slurm/q2_dada2.sbatch`, which runs in qiime2-2022.2 due to issues with 2022.11 on FIJI.
+Trimmed both at 20 to make sure there are no primers still in the sequences. 
+Good quality reads on the whole.
+
+```{zsh, eval=F}
+qiime dada2 denoise-paired \
+--i-demultiplexed-seqs qiime/demux/per_sample_sequences.qza \
+--p-trim-left-f 20 \
+--p-trunc-len-f 227 \
+--p-trim-left-r 20 \
+--p-trunc-len-r 182 \
+--p-n-threads 32 \
+--output-dir qiime/dada2-out/ \
+--verbose
+```
+
+# SEPP (building phylogeny)
+
+Run using `slurm/q2_sepp.sbatch`, which runs:
+```{zsh, eval=F}
+qiime fragment-insertion sepp \
+--i-representative-sequences qiime/dada2-out/representative_sequences.qza \
+--i-reference-database qiime/sepp-refs-silva-128.qza \
+--o-tree qiime/insertion-tree.qza \
+--o-placements qiime/insertion-placements.qza \
+--p-threads 32 \
+--verbose
+
+qiime fragment-insertion filter-features \
+--i-table qiime/dada2-out/table.qza \
+--i-tree qiime/insertion-tree.qza \
+--o-filtered-table qiime/filtered-table.qza \
+--o-removed-table qiime/removed-table.qza
+```
+
+# Taxonomy classification
+Run using `slurm/q2_tax_class.sbatch`, which runs:
+```{zsh, eval=F}
+qiime feature-classifier classify-sklearn \
+--i-reads qiime/dada2-out/representative_sequences.qza \
+--i-classifier qiime/silva-138-99-515-806-nb-classifier.qza \
+--output-dir qiime/silva-classified
+
+qiime metadata tabulate \
+--m-input-file qiime/silva-classified/classification.qza \
+--o-visualization qiime/silva-classified/classification.qzv
+
+mv qiime/silva-classified/classification.qza qiime/taxonomy-silva.qza
+mv qiime/silva-classified/classification.qzv qiime/taxonomy-silva.qzv
+
+```
+
+# Filtering mitochondria and chloroplast
+Run using `slurm/q2_filter_mito_chloro.sbatch`, which runs:
+```{zsh, eval=F}
+
+qiime taxa filter-table \
+  --i-table qiime/filtered-table.qza \
+  --i-taxonomy qiime/taxonomy-silva.qza \
+  --p-exclude mitochondria,chloroplast \
+  --o-filtered-table qiime/noMito_noChloro-filtered-table.qza 
+```
+
+# Core metrics phylogenetic
+```{zsh, eval=F}
+qiime diversity core-metrics-phylogenetic \
+--i-table qiime/noMito_noChloro-filtered-table.qza \
+--i-phylogeny qiime/insertion-tree.qza \
+--p-sampling-depth 12500 \
+--m-metadata-file data/Reuter_mapping_042720_clf_ccl.tsv \
+--output-dir qiime/core-metrics-phylogenetic \
+--verbose
+```
+
+
+
