@@ -46,6 +46,8 @@ qiime dada2 denoise-paired \
 
 # SEPP (building phylogeny)
 
+The QIIME2-compatible SILVA reference database was downloaded from https://data.qiime2.org/2021.4/common/sepp-refs-silva-128.qza
+
 Run using `slurm/q2_sepp.sbatch`, which runs:
 ```{zsh, eval=F}
 qiime fragment-insertion sepp \
@@ -64,6 +66,8 @@ qiime fragment-insertion filter-features \
 ```
 
 # Taxonomy classification
+A pretrained classifier was downloaded from https://data.qiime2.org/2021.4/common/silva-138-99-515-806-nb-classifier.qza
+
 Run using `slurm/q2_tax_class.sbatch`, which runs:
 ```{zsh, eval=F}
 qiime feature-classifier classify-sklearn \
@@ -96,8 +100,7 @@ qiime taxa filter-table \
 qiime diversity core-metrics-phylogenetic \
 --i-table qiime/noMito_noChloro-filtered-table.qza \
 --i-phylogeny qiime/insertion-tree.qza \
---p-sampling-depth 12500 \
---m-metadata-file data/Reuter_mapping_042720_clf_ccl.tsv \
+--p-sampling-depth 14919 \
 --output-dir qiime/core-metrics-phylogenetic \
 --verbose
 ```
