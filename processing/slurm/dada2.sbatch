@@ -1,6 +1,6 @@
 #!/bin/bash
 #SBATCH -p short # Partition or queue.
-#SBATCH --job-name=import # Job name
+#SBATCH --job-name=dada2 # Job name
 #SBATCH --mail-type=ALL # Mail events (NONE, BEGIN, END, FAIL, ALL)
 #SBATCH --mail-user=jost9358@colorado.edu
 #SBATCH --nodes=1 # Only use a single node
